@@ -1,0 +1,80 @@
+
+```{r}
+## Load library
+library(leaflet)
+library(tidyverse)
+```
+
+```{r}
+## Load data table
+citibike <- read_rds('data/201508.rds')
+```
+
+```{r}
+## Summarize data to plot  
+station.info <- citibike %>%
+  group_by(start.station.id) %>%
+  summarise(lat = as.numeric(start.station.latitude[1]),
+            long = as.numeric(start.station.longitude[1]),
+            name = start.station.name[1],
+            n.trips = n())
+
+
+## Make plot with station locations 
+leaflet(station.info) %>% 
+  addTiles() %>%
+  addCircles(lng = ~long, lat = ~lat)
+```
+
+```{r}
+## Add information to the markers in the maps
+station.info <- citibike %>%
+  group_by(start.station.id) %>%
+  summarise(lat = as.numeric(start.station.latitude[1]),
+            long = as.numeric(start.station.longitude[1]),
+            n.trips = n(),
+            name = paste0(start.station.name[1], '<br/>', 
+                          'Number of Trips: ', n.trips))
+
+
+leaflet(station.info) %>%                              
+  addTiles() %>%
+  addCircles(lng = ~long, lat = ~lat, popup = ~name) %>%
+  addProviderTiles("OpenStreetMap.Mapnik")
+```
+
+```{r}
+## Add further information and use an html break where you want line breaks
+station.info <- citibike %>%
+  group_by(start.station.id) %>%
+  summarise(lat = as.numeric(start.station.latitude[1]),
+            long = as.numeric(start.station.longitude[1]),
+            n.trips.subscriber = sum(usertype == 'Subscriber'),
+            n.trips.customer = sum(usertype == 'Customer'),
+            n.trips = n(),
+            name = paste0(start.station.name[1], '<br/>',
+                          'Number of Customer Trips: ', n.trips.customer, '<br/>',
+                          'Number of Subscriber Trips: ', n.trips.subscriber))
+
+leaflet(station.info) %>% 
+  addTiles() %>%
+  addCircles(lng = ~long, lat = ~lat, popup = ~name) %>%
+  addProviderTiles("OpenStreetMap.Mapnik")
+```
+
+```{r}
+## Here is a version with less clutter and circle size conveying information (here number of trips):
+leaflet(station.info) %>% 
+  addTiles() %>%
+  addCircles(lng = ~long, 
+             lat = ~lat, 
+             weight = 1,
+             radius = ~sqrt(n.trips) * 2,
+             popup = ~name) %>%
+  addProviderTiles(providers$Esri.WorldGrayCanvas)
+```
+
+
+
+
+
